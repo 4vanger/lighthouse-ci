@@ -46,11 +46,11 @@ yarn install # run in the repo root
 
 When working on the CLI, simply make your changes to `packages/cli` or `packages/utils` files and run `yarn start <LHCI arguments here>`. No build step necessary.
 
-When working on the server, you'll need to start parcel in watch mode. In one terminal run `yarn build:watch` from the repo root. In another terminal run `yarn start:server`. If you made any changes to the APIs of the server, you will need to restart the `yarn start:server` command, but UI changes should be picked up on refresh without restarting the server process. Once the server is up and running you can fill it with some test data by running `yarn start:seed-database` in another terminal.
+When working on the server, you'll need to start build in watch mode. In one terminal run `yarn build:watch` from the repo root. In another terminal run `yarn start:server`. If you made any changes to the APIs of the server, you will need to restart the `yarn start:server` command, but UI changes should be picked up on refresh without restarting the server process. Once the server is up and running you can fill it with some test data by running `yarn start:seed-database` in another terminal.
 
 ## Updating the Lighthouse Version
 
-Updating the Lighthouse version used by LHCI involves more than a simple `package.json` update. When the Lighthouse version changes, it is usually a _breaking change_ for Lighthouse CI (see [version policy](./docs/version-policy.md)) and triggers many corresponding updates, including the following:
+Updating the Lighthouse version used by LHCI involves more than a simple `package.json` update. When the Lighthouse version changes, it is usually a _breaking change_ for Lighthouse CI (see [version policy](./docs/version-policy.md)) and triggers many corresponding updates, including the following ([Example PR](https://github.com/GoogleChrome/lighthouse-ci/pull/621)):
 
 - Update the `package.json` version in @lhci/utils and @lhci/cli.
 - Run the new `lighthouse` version on a sufficiently complex URL (https://www.coursehero.com/ or https://www.theverge.com) and commit the LHR.
@@ -71,7 +71,7 @@ The server has three primary components: the API, the UI, and cron jobs.
 
 The API is a standard node express server. Code for the API lives in `packages/server/src/api/`.
 
-The UI is written in [preact](https://preactjs.com/) and bundled with [parcel](https://parceljs.org/). Code for the UI lives in `packages/server/src/ui/`. This is the only part of Lighthouse CI that requires a build step in order to use.
+The UI is written in [preact](https://preactjs.com/) and bundled with [esbuild](https://esbuild.github.io/). Code for the UI lives in `packages/server/src/ui/`. This is the only part of Lighthouse CI that requires a build step in order to use.
 
 The cron jobs are periodic tasks that run while the server is alive. Code for the cron jobs lives in `packages/server/src/cron/`.
 

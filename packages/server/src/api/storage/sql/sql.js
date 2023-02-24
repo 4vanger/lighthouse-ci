@@ -80,7 +80,7 @@ function validatePartialUuidOrUndefined(id) {
 function createSequelize(options) {
   const dialect = options.sqlDialect;
   const sequelizeOptions = {
-    logging: () => {},
+    logging: /** @param {*} msg */ msg => logVerbose('[sequelize]', msg),
     ...options.sequelizeOptions,
     operatorsAliases: false,
   };
@@ -134,9 +134,12 @@ function createSequelize(options) {
  */
 function createUmzug(sequelize, options) {
   return new Umzug({
-    logging: () => {},
+    logging: /** @param {*} msg */ msg => logVerbose('[umzug]', msg),
     storage: 'sequelize',
-    storageOptions: {sequelize: /** @type {*} */ (sequelize)},
+    storageOptions: {
+      sequelize: /** @type {*} */ (sequelize),
+      tableName: options.sqlMigrationOptions && options.sqlMigrationOptions.tableName,
+    },
     migrations: {
       path: path.join(__dirname, 'migrations'),
       params: [sequelize.getQueryInterface(), Sequelize, options],
@@ -225,8 +228,10 @@ class SqlStorageMethod {
     if (!statisticModelDefn.attributes.projectId.references) throw new Error('Invalid runModel');
     if (!statisticModelDefn.attributes.buildId.references) throw new Error('Invalid runModel');
 
+    log('[initialize] initializing database connection');
     const sequelize = createSequelize(options);
 
+    log('[initialize] defining models');
     const projectModel = sequelize.define(projectModelDefn.tableName, projectModelDefn.attributes);
 
     buildModelDefn.attributes.projectId.references.model = projectModel;
@@ -245,10 +250,13 @@ class SqlStorageMethod {
 
     const umzug = createUmzug(sequelize, options);
     if (options.sqlDangerouslyResetDatabase) {
+      log('[initialize] resetting database');
       await umzug.down({to: 0});
     }
 
+    log('[initialize] running migrations');
     await umzug.up();
+    log('[initialize] migrations performed');
 
     this._sequelize = {sequelize, projectModel, buildModel, runModel, statisticModel};
   }

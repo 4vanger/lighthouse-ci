@@ -6,6 +6,7 @@
 'use strict';
 
 const _ = require('./lodash.js');
+const {getGroupForAuditId} = require('./seed-data/lhr-generator.js');
 
 /** @typedef {'improvement'|'neutral'|'regression'} DiffLabel */
 /** @typedef {'better'|'worse'|'added'|'removed'|'ambiguous'|'no change'} RowLabel */
@@ -249,7 +250,7 @@ function createAuditDiff(diff) {
  * @param {string} auditId
  * @param {DetailItemEntry} baseEntry
  * @param {DetailItemEntry} compareEntry
- * @param {Array<{key: string}>} headings
+ * @param {Array<{key: string | null}>} headings
  * @return {Array<LHCI.AuditDiff>}
  */
 function findAuditDetailItemKeyDiffs(auditId, baseEntry, compareEntry, headings) {
@@ -351,6 +352,33 @@ function replaceNondeterministicStrings(s) {
   );
 }
 
+/**
+ * The items passed to this method can be dirtied by other libraries and contain circular structures.
+ * Prune any private-looking properties that start with `_` throughout the entire object.
+ *
+ * @see https://github.com/GoogleChrome/lighthouse-ci/issues/666
+ * @param {unknown} item
+ * @return {unknown}
+ */
+function deepPruneItemForKeySerialization(item) {
+  if (typeof item !== 'object') return item;
+  if (item === null) return item;
+
+  if (Array.isArray(item)) {
+    return item.map(entry => deepPruneItemForKeySerialization(entry));
+  } else {
+    const itemAsRecord = /** @type {Record<string, unknown>} */ (item);
+    const keys = Object.keys(item);
+    const keysToKeep = keys.filter(key => !key.startsWith('_'));
+    /** @type {Record<string, any>} */
+    const copy = {};
+    for (const key of keysToKeep) {
+      copy[key] = deepPruneItemForKeySerialization(itemAsRecord[key]);
+    }
+    return copy;
+  }
+}
+
 /** @param {Record<string, any>} item @return {string} */
 function getItemKey(item) {
   // For most opportunities, diagnostics, etc where 1 row === 1 resource
@@ -371,7 +399,7 @@ function getItemKey(item) {
   if (item.entity && typeof item.entity.text === 'string') return item.entity.text;
 
   // For everything else, use the entire object, actually works OK on most nodes.
-  return JSON.stringify(item);
+  return JSON.stringify(deepPruneItemForKeySerialization(item));
 }
 
 /**
@@ -466,7 +494,7 @@ function sortZippedBaseAndCompareItems(diffs, zippedItems) {
  * @param {string} auditId
  * @param {Array<Record<string, any>>} baseItems
  * @param {Array<Record<string, any>>} compareItems
- * @param {Array<{key: string}>} headings
+ * @param {Array<{key: string | null}>} headings
  * @return {Array<LHCI.AuditDiff>}
  */
 function findAuditDetailItemsDiffs(auditId, baseItems, compareItems, headings) {
@@ -587,9 +615,13 @@ function findAuditDiffs(baseAudit, compareAudit, options = {}) {
   }
 
   let hasItemDetails = false;
+  /** @type {Partial<LH.AuditResult['details']>} */
+  const baseAuditDetails = baseAudit.details || {};
+  /** @type {Partial<LH.AuditResult['details']>} */
+  const compareAuditDetails = compareAudit.details || {};
   if (
-    (baseAudit.details && baseAudit.details.items) ||
-    (compareAudit.details && compareAudit.details.items)
+    (baseAuditDetails.type !== 'debugdata' && baseAuditDetails.items) ||
+    (compareAuditDetails.type !== 'debugdata' && compareAuditDetails.items)
   ) {
     hasItemDetails = true;
     const {items: baseItems, headings: baseHeadings} = normalizeDetails(baseAudit);
@@ -637,7 +669,9 @@ function findAuditDiffs(baseAudit, compareAudit, options = {}) {
   // If the only diff found was a numericValue/displayValue diff *AND* it seems like the result was flaky, skip it.
   // The result is likely flaky if the audit passed *OR* it was supposed to have details but no details items changed.
   const isAllPassing = compareAudit.score === 1 && baseAudit.score === 1;
+  const group = getGroupForAuditId(auditId);
   if (
+    group !== 'metrics' && // if metrics group audit is found, don't skip it
     filteredDiffs.every(diff => diff.type === 'displayValue' || diff.type === 'numericValue') &&
     (isAllPassing || hasItemDetails)
   ) {

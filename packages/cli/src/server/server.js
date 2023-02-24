@@ -23,6 +23,9 @@ function buildCommand(yargs) {
       type: 'number',
       default: 9001,
     },
+    host: {
+      type: 'string',
+    },
     'storage.storageMethod': {
       type: 'string',
       choices: ['sql', 'spanner'],
@@ -49,6 +52,10 @@ function buildCommand(yargs) {
         'Whether to force the database to the required schema. WARNING: THIS WILL DELETE ALL DATA',
       type: 'boolean',
       default: false,
+    },
+    'storage.sqlMigrationOptions.tableName': {
+      type: 'string',
+      description: 'Use a different Sequelize table name.',
     },
     'basicAuth.username': {
       type: 'string',

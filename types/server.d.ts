@@ -155,6 +155,9 @@ declare global {
         projectSlug: string;
         label?: string;
         branch?: string;
+        maxNumberOfParallelUrls?: number;
+        categories?: Array<'performance' | 'accessibility' | 'best-practices' | 'pwa' | 'seo'>;
+        strategy?: 'desktop' | 'mobile';
       }
 
       export interface StorageOptions {
@@ -173,11 +176,15 @@ declare global {
         sqlConnectionUrl?: string;
         sqlDangerouslyResetDatabase?: boolean;
         sequelizeOptions?: import('sequelize').Options;
+        sqlMigrationOptions?: {
+          tableName?: string
+        }
       }
 
       export interface Options {
         logLevel: 'silent' | 'verbose';
         port: number;
+        host?: string
         storage: StorageOptions;
         psiCollectCron?: {
           psiApiKey: string;

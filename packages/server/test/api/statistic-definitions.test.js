@@ -17,6 +17,10 @@ const baseLhr62_ = require('../fixtures/lh-6-2-0-coursehero-a.json');
 const baseLhr641_ = require('../fixtures/lh-6-4-1-coursehero-a.json');
 /** @type {any} */
 const baseLhr700_ = require('../fixtures/lh-7-0-0-coursehero-a.json');
+/** @type {any} */
+const baseLhr800_ = require('../fixtures/lh-8-0-0-coursehero-a.json');
+/** @type {any} */
+const baselhr930_ = require('../fixtures/lh-9-3-0-coursehero-a.json');
 const {definitions} = require('../../src/api/statistic-definitions.js');
 
 describe('Statistic Definitions', () => {
@@ -30,6 +34,10 @@ describe('Statistic Definitions', () => {
   const baseLhr641 = baseLhr641_;
   /** @type {LH.Result} */
   const baseLhr700 = baseLhr700_;
+  /** @type {LH.Result} */
+  const baseLhr800 = baseLhr800_;
+  /** @type {LH.Result} */
+  const baselhr930 = baselhr930_;
 
   describe('meta_lighthouse_version()', () => {
     const run = definitions.meta_lighthouse_version;
@@ -40,6 +48,8 @@ describe('Statistic Definitions', () => {
       expect(run([baseLhr62])).toEqual({value: 60200});
       expect(run([baseLhr641])).toEqual({value: 60401});
       expect(run([baseLhr700])).toEqual({value: 70000});
+      expect(run([baseLhr800])).toEqual({value: 80000});
+      expect(run([baselhr930])).toEqual({value: 90300});
       expect(run([{...baseLhr5, lighthouseVersion: '1.2.3-beta.0'}])).toEqual({value: 10203});
     });
 
@@ -62,6 +72,8 @@ describe('Statistic Definitions', () => {
       expect(run([high, baseLhr62, low]).value).toBeCloseTo(19669.83);
       expect(run([high, baseLhr641, low]).value).toBeCloseTo(19945.48);
       expect(run([high, baseLhr700, low]).value).toBeCloseTo(21206.92);
+      expect(run([high, baseLhr800, low]).value).toBeCloseTo(20822.103);
+      expect(run([high, baselhr930, low]).value).toBeCloseTo(20525.578);
     });
   });
 
@@ -78,6 +90,8 @@ describe('Statistic Definitions', () => {
       expect(run([high, baseLhr62, low]).value).toBeCloseTo(0.28);
       expect(run([high, baseLhr641, low]).value).toBeCloseTo(0.2);
       expect(run([high, baseLhr700, low]).value).toBeCloseTo(0.18);
+      expect(run([high, baseLhr800, low]).value).toBeCloseTo(0.24);
+      expect(run([high, baselhr930, low]).value).toBeCloseTo(0.23);
     });
   });
 
@@ -94,6 +108,8 @@ describe('Statistic Definitions', () => {
       expect(run([high, baseLhr62, low]).value).toBeCloseTo(0.01);
       expect(run([high, baseLhr641, low]).value).toBeCloseTo(0.01);
       expect(run([high, baseLhr700, low]).value).toBeCloseTo(0.01);
+      expect(run([high, baseLhr800, low]).value).toBeCloseTo(0.01);
+      expect(run([high, baselhr930, low]).value).toBeCloseTo(0.01);
     });
   });
 
@@ -110,6 +126,8 @@ describe('Statistic Definitions', () => {
       expect(run([high, baseLhr62, low]).value).toBeCloseTo(0.99);
       expect(run([high, baseLhr641, low]).value).toBeCloseTo(0.99);
       expect(run([high, baseLhr700, low]).value).toBeCloseTo(0.99);
+      expect(run([high, baseLhr800, low]).value).toBeCloseTo(0.99);
+      expect(run([high, baselhr930, low]).value).toBeCloseTo(0.99);
     });
   });
 
@@ -120,16 +138,22 @@ describe('Statistic Definitions', () => {
       expect(definitions['auditgroup_a11y-aria_pass']([baseLhr62])).toEqual({value: 10});
       expect(definitions['auditgroup_a11y-aria_pass']([baseLhr641])).toEqual({value: 10});
       expect(definitions['auditgroup_a11y-aria_pass']([baseLhr700])).toEqual({value: 10});
+      expect(definitions['auditgroup_a11y-aria_pass']([baseLhr800])).toEqual({value: 6});
+      expect(definitions['auditgroup_a11y-aria_pass']([baselhr930])).toEqual({value: 8});
       expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr5])).toEqual({value: 0});
       expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr6])).toEqual({value: 1});
       expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr62])).toEqual({value: 1});
       expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr641])).toEqual({value: 1});
       expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr700])).toEqual({value: 1});
+      expect(definitions['auditgroup_a11y-color-contrast_fail']([baseLhr800])).toEqual({value: 1});
+      expect(definitions['auditgroup_a11y-color-contrast_fail']([baselhr930])).toEqual({value: 1});
       expect(definitions['auditgroup_a11y-aria_na']([baseLhr5])).toEqual({value: 0});
       expect(definitions['auditgroup_a11y-aria_na']([baseLhr6])).toEqual({value: 2});
       expect(definitions['auditgroup_a11y-aria_na']([baseLhr62])).toEqual({value: 2});
       expect(definitions['auditgroup_a11y-aria_na']([baseLhr641])).toEqual({value: 2});
       expect(definitions['auditgroup_a11y-aria_na']([baseLhr700])).toEqual({value: 7});
+      expect(definitions['auditgroup_a11y-aria_na']([baseLhr800])).toEqual({value: 11});
+      expect(definitions['auditgroup_a11y-aria_na']([baselhr930])).toEqual({value: 9});
     });
   });
 });

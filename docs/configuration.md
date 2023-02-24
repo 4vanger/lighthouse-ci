@@ -218,6 +218,8 @@ Options:
   --puppeteerLaunchOptions   The object of puppeteer launch options
   --psiApiKey                [psi only] The API key to use for PageSpeed Insights runner method.
                              You do not need to use this unless you wrote a custom version.
+  --psiStrategy              [psi only] The strategy to use for PageSpeed Insights runner method. 
+                              Use mobile or desktop. The default value is mobile
   --startServerCommand       The command to run to start the server.
   --startServerReadyPattern  String pattern to listen for started server.
                                                                   [string] [default: "listen|ready"]
@@ -338,6 +340,12 @@ _method=psi only_
 
 The API endpoint to hit for making a PageSpeed Insights request. It is very unlikely you should need to use this option. Only use this if you have self-hosted a custom version of the PSI API.
 
+#### `psiStrategy`
+
+_method=psi only_
+
+Use this option to change the strategy to use for PageSpeed Insights runner method. Use `mobile` or `desktop`. The default value is `mobile`.
+
 #### `startServerCommand`
 
 The shell command to use to start the project's webserver. LHCI will use this command to start the server before loading the `url`s and automatically shut it down once collection is complete.
@@ -356,7 +364,17 @@ The maximum amount of time in milliseconds to wait for `startServerCommand` to p
 
 #### `settings`
 
-The [Lighthouse settings object](https://github.com/GoogleChrome/lighthouse/blob/master/docs/configuration.md#settings-objectundefined) to pass along to Lighthouse. This can be used to change configuration of Lighthouse itself.
+The [Lighthouse CLI flags](https://github.com/GoogleChrome/lighthouse/#cli-options) to pass along to Lighthouse. This can be used to change configuration of Lighthouse itself. See [Lighthouse documentation on custom configs](https://github.com/GoogleChrome/lighthouse/blob/master/docs/configuration.md) for more.
+
+Note that the following options cannot be used because LHCI uses them internally:
+
+- `port`
+- `auditMode`
+- `gatherMode`
+- `output`
+- `outputPath`
+- `channel`
+- `cli-flags-path`
 
 **Example:**
 
@@ -372,7 +390,9 @@ The [Lighthouse settings object](https://github.com/GoogleChrome/lighthouse/blob
         // Wait up to 90s for the page to load
         "maxWaitForLoad": 90000,
         // Use applied throttling instead of simulated throttling
-        "throttlingMethod": "devtools"
+        "throttlingMethod": "devtools",
+        // Use a custom Lighthouse config file.
+        "configPath": "path/to/custom/config.js"
       }
     }
   }
@@ -404,7 +424,7 @@ lhci collect --start-server-command="yarn serve" --url=http://localhost:8080/ --
 
 ### `upload`
 
-Saves the runs in the `.lighthouseci/` folder to desired target and sets a GitHub status check when the GitHub token is available.
+Saves the runs in the `.lighthouseci/` folder to desired target and sets a GitHub status check when the GitHub token is available and target is not `filesystem`.
 
 ```bash
 Options:
@@ -464,6 +484,7 @@ The target location to which Lighthouse CI should upload the reports.
 - You want to process the raw Lighthouse results yourself locally.
 - You want access to the report files on the local filesystem.
 - You don't want to upload the results to a custom location that isn't supported by Lighthouse CI.
+- You don't need detailed status checks in GitHub
 
 #### `token`
 
@@ -507,7 +528,7 @@ A map of additional headers to add the requests made to the LHCI server. Useful 
 
 _target=lhci only_
 
-An object containing a username and password pair for authenicating with a Basic auth protected LHCI server. Use this setting when you've protected your LHCI server with Basic auth.
+An object containing a username and password pair for authenticating with a Basic auth protected LHCI server. Use this setting when you've protected your LHCI server with Basic auth.
 
 **Example:**
 
@@ -871,22 +892,28 @@ Starts the LHCI server. This command is unique in that it is likely run on infra
 Run Lighthouse CI server
 
 Options:
-  --logLevel                                              [string] [choices: "silent", "verbose"] [default: "verbose"]
-  --port, -p                                                                                  [number] [default: 9001]
-  --storage.storageMethod                                                   [string] [choices: "sql"] [default: "sql"]
-  --storage.sqlDialect                           [string] [choices: "sqlite", "postgres", "mysql"] [default: "sqlite"]
-  --storage.sqlDatabasePath              The path to a SQLite database on disk.
-  --storage.sqlConnectionUrl             The connection url to a postgres or mysql database.
-  --storage.sqlConnectionSsl             Whether the SQL connection should force use of SSL [boolean] [default: false]
-  --storage.sqlDangerouslyResetDatabase  Whether to force the database to the required schema. WARNING: THIS WILL
-                                         DELETE ALL DATA                                    [boolean] [default: false]
-  --basicAuth.username                   The username to protect the server with HTTP Basic Authentication.   [string]
-  --basicAuth.password                   The password to protect the server with HTTP Basic Authentication.   [string]
+  --logLevel                                               [string] [choices: "silent", "verbose"] [default: "verbose"]
+  --port, -p                                                                                   [number] [default: 9001]
+  --storage.storageMethod                                                    [string] [choices: "sql"] [default: "sql"]
+  --storage.sqlDialect                            [string] [choices: "sqlite", "postgres", "mysql"] [default: "sqlite"]
+  --storage.sqlDatabasePath               The path to a SQLite database on disk.
+  --storage.sqlConnectionUrl              The connection url to a postgres or mysql database.
+  --storage.sqlConnectionSsl              Whether the SQL connection should force use of SSL [boolean] [default: false]
+  --storage.sqlDangerouslyResetDatabase   Whether to force the database to the required schema. WARNING: THIS WILL
+                                          DELETE ALL DATA                                    [boolean] [default: false]
+  --storage.sqlMigrationOptions.tableName Use a different Sequelize table name.                                [string]
+  --basicAuth.username                    The username to protect the server with HTTP Basic Authentication.   [string]
+  --basicAuth.password                    The password to protect the server with HTTP Basic Authentication.   [string]
 ```
 
 #### `port`
 
 The port for the server to listen on. A value of `0` will use a random available port.
+https://nodejs.org/api/net.html#net_server_listen_port_host_backlog_callback
+
+#### `host`
+
+The host to bind the server to. The [default](https://nodejs.org/api/net.html#net_server_listen_port_host_backlog_callback) is to use the [unspecified IPv6 address](https://en.wikipedia.org/wiki/IPv6_address#Unspecified_address) (::) when IPv6 is available, or the [unspecified IPv4 address](https://en.wikipedia.org/wiki/0.0.0.0) (0.0.0.0) otherwise. To only accept connections on IPv4 use `0.0.0.0` as host.
 
 #### `storage`
 
@@ -917,6 +944,10 @@ Boolean flag useful during setup if things have gone wrong. This flag will reset
 ##### `storage.sequelizeOptions`
 
 Additional raw options object to pass to [sequelize](https://sequelize.org/v4/). Refer to the [sequelize documentation](https://sequelize.org/v4/) for more information on available settings.
+
+##### `storage.sqlMigrationOptions.tableName`
+
+Use a different Sequelize table name. Default: `SequelizeMeta`. Refer to the [sequelize migrations documentation](https://sequelize.org/v4/manual/tutorial/migrations.html#migration-storage) for more information.
 
 #### `psiCollectCron`
 
@@ -969,6 +1000,18 @@ _Optional_ The human friendly label for this set of URLs to use when logging sta
 ##### `psiCollectCron.sites[i].branch`
 
 _Optional_ The "branch" on which to report the results. Defaults to the base branch of the project referenced by `projectSlug`.
+
+##### `psiCollectCron.sites[i].maxNumberOfParallelUrls`
+
+_Optional_ The maximum number of requests to send to the PageSpeed Insights API concurrently. Defaults to `Infinity` (all urls sent in parallel).
+
+##### `psiCollectCron.sites[i].categories`
+
+_Optional_ An array containing the categories to test for each url in this site. Defaults to `['performance', 'accessibility', 'best-practices', 'pwa', 'seo']` (all categories).
+
+##### `psiCollectCron.sites[i].strategy`
+
+_Optional_ The strategy that the PageSpeed Insights API should use when testing each url in this site. Can be either `desktop` or `mobile`. Defaults to `mobile`.
 
 #### `deleteOldBuildsCron`
 
@@ -1303,6 +1346,10 @@ module.exports = {
         sqlDialect: 'postgres',
         sqlConnectionSsl: true,
         sqlConnectionUrl: process.env.DATABASE_URL,
+        sqlDialectOptions: {
+          // this flag also needs to be set in order to make a secure connection if not setting custom certificates
+          ssl: true,
+        },
         sequelizeOptions: {
           pool: {
             acquire: 30000,
@@ -1345,6 +1392,9 @@ module.exports = {
         sqlDialect: 'postgres',
         sqlConnectionSsl: true,
         sqlConnectionUrl: process.env.DATABASE_URL,
+        sqlDialectOptions: {
+          ssl: true,
+        },
         sequelizeOptions: {
           pool: {
             acquire: 30000,

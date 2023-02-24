@@ -56,7 +56,7 @@ describe('Lighthouse CI assert CLI', () => {
     const result = await run([`--preset=lighthouse:recommended`]);
     expect(result.status).toEqual(1);
     expect(result.failures.length).toMatchInlineSnapshot(`99`);
-    expect(result.warnings.length).toMatchInlineSnapshot(`18`);
+    expect(result.warnings.length).toMatchInlineSnapshot(`17`);
     expect(result.passes.length).toMatchInlineSnapshot(`0`);
     expect(result.failures).toContain('deprecations failure');
     expect(result.failures).toContain('viewport failure');
@@ -66,7 +66,7 @@ describe('Lighthouse CI assert CLI', () => {
     const result = await run([`--preset=lighthouse:no-pwa`]);
     expect(result.status).toEqual(1);
     expect(result.failures.length).toMatchInlineSnapshot(`91`);
-    expect(result.warnings.length).toMatchInlineSnapshot(`17`);
+    expect(result.warnings.length).toMatchInlineSnapshot(`16`);
     expect(result.passes.length).toMatchInlineSnapshot(`0`);
     expect(result.failures).toContain('deprecations failure');
     expect(result.failures).not.toContain('viewport failure');
@@ -91,7 +91,7 @@ describe('Lighthouse CI assert CLI', () => {
   it('should return passing audits', async () => {
     const result = await run([`--preset=lighthouse:recommended`, '--include-passed-assertions']);
     expect(result.status).toEqual(1);
-    expect(result.warnings.length).toMatchInlineSnapshot(`18`);
+    expect(result.warnings.length).toMatchInlineSnapshot(`17`);
     expect(result.failures.length).toMatchInlineSnapshot(`99`);
     expect(result.passes.length).toMatchInlineSnapshot(`1`);
     expect(result.passes).toContain('first-contentful-paint passing');
